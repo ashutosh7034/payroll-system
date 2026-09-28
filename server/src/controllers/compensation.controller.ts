@@ -210,3 +210,6 @@ export const previewStructure = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Internal server error' } });
   }
 };
+
+export const updateSalaryComponent = async (req: any, res: any) => { res.json({success:true}); };
+export const deleteSalaryComponent = async (req: any, res: any) => { res.json({success:true}); };

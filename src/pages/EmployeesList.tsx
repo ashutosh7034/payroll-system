@@ -59,44 +59,47 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
-      <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+      <div className="modal-content" style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 className="card-title">Add New Employee</h3>
-          <button className="btn-ghost" onClick={onClose}>&times;</button>
+          <button className="btn-ghost" onClick={onClose} type="button">&times;</button>
         </div>
         
-        <div className="px-6 py-3 border-b border-gray-100 bg-gray-50/50 text-small text-secondary flex justify-between">
-          <span className={step === 1 ? 'font-medium text-primary' : ''}>1. Personal</span>
-          <span className={step === 2 ? 'font-medium text-primary' : ''}>2. Employment</span>
-          <span className={step === 3 ? 'font-medium text-primary' : ''}>3. Organization</span>
-          <span className={step === 4 ? 'font-medium text-primary' : ''}>4. Bank</span>
-          <span className={step === 5 ? 'font-medium text-primary' : ''}>5. Tax</span>
+        <div className="px-6 py-4 border-b border-[var(--border-light)] bg-[var(--bg-app)] text-small flex justify-between overflow-x-auto">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className="flex items-center gap-2">
+              <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: step >= s ? 'var(--primary-dark)' : 'var(--bg-surface-active)', color: step >= s ? 'white' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>{s}</div>
+              <span style={{ color: step >= s ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: step === s ? 600 : 500 }}>
+                {s === 1 ? 'Personal' : s === 2 ? 'Employment' : s === 3 ? 'Organization' : s === 4 ? 'Bank' : 'Tax'}
+              </span>
+            </div>
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="modal-body" style={{ minHeight: '300px' }}>
-            {error && <div className="p-3 mb-4 text-sm text-red-600 bg-red-50 rounded-md border border-red-200">{error}</div>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          <div className="modal-body" style={{ minHeight: '300px', flex: 1, overflowY: 'auto' }}>
+            {error && <div className="p-3 mb-4 text-sm bg-[var(--error-bg)] text-[var(--error-color)] rounded-md border border-[var(--error-color)]">{error}</div>}
             
             {step === 1 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
-                  <label className="form-label">Employee ID *</label>
+                  <label className="form-label">Employee ID <span className="text-[var(--danger-color)]">*</span></label>
                   <input type="text" name="employeeId" className="form-input" required value={formData.employeeId} onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Email *</label>
+                  <label className="form-label">Email <span className="text-[var(--danger-color)]">*</span></label>
                   <input type="email" name="email" className="form-input" required value={formData.email} onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">First Name *</label>
+                  <label className="form-label">First Name <span className="text-[var(--danger-color)]">*</span></label>
                   <input type="text" name="firstName" className="form-input" required value={formData.firstName} onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Last Name *</label>
+                  <label className="form-label">Last Name <span className="text-[var(--danger-color)]">*</span></label>
                   <input type="text" name="lastName" className="form-input" required value={formData.lastName} onChange={handleChange} />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Status *</label>
+                  <label className="form-label">Status <span className="text-[var(--danger-color)]">*</span></label>
                   <select name="status" className="form-input" value={formData.status} onChange={handleChange}>
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
@@ -108,7 +111,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
             {step === 2 && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
-                  <label className="form-label">Employment Type *</label>
+                  <label className="form-label">Employment Type <span className="text-[var(--danger-color)]">*</span></label>
                   <select name="employmentType" className="form-input" required value={formData.employmentType} onChange={handleChange}>
                     <option value="FULL_TIME">Full Time</option>
                     <option value="PART_TIME">Part Time</option>
@@ -116,7 +119,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
                   </select>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Joining Date *</label>
+                  <label className="form-label">Joining Date <span className="text-[var(--danger-color)]">*</span></label>
                   <input type="date" name="joiningDate" className="form-input" required value={formData.joiningDate} onChange={handleChange} />
                 </div>
               </div>
@@ -127,28 +130,28 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
                 <div className="form-group">
                   <label className="form-label">Legal Entity</label>
                   <select name="legalEntityId" className="form-input" value={formData.legalEntityId} onChange={handleChange}>
-                    <option value="">Select Entity</option>
+                    <option value="">Select Entity (Optional)</option>
                     {orgData.entities.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Location</label>
                   <select name="locationId" className="form-input" value={formData.locationId} onChange={handleChange}>
-                    <option value="">Select Location</option>
+                    <option value="">Select Location (Optional)</option>
                     {orgData.locations.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Department</label>
                   <select name="departmentId" className="form-input" value={formData.departmentId} onChange={handleChange}>
-                    <option value="">Select Department</option>
+                    <option value="">Select Department (Optional)</option>
                     {orgData.departments.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Designation</label>
                   <select name="designationId" className="form-input" value={formData.designationId} onChange={handleChange}>
-                    <option value="">Select Designation</option>
+                    <option value="">Select Designation (Optional)</option>
                     {orgData.designations.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
@@ -159,15 +162,15 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
                   <label className="form-label">Bank Name</label>
-                  <input type="text" name="bankName" className="form-input" value={formData.bankName} onChange={handleChange} />
+                  <input type="text" name="bankName" className="form-input" value={formData.bankName} onChange={handleChange} placeholder="Optional" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Account Number</label>
-                  <input type="text" name="accountNumber" className="form-input" value={formData.accountNumber} onChange={handleChange} />
+                  <input type="text" name="accountNumber" className="form-input" value={formData.accountNumber} onChange={handleChange} placeholder="Optional" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">IFSC Code</label>
-                  <input type="text" name="ifscCode" className="form-input" value={formData.ifscCode} onChange={handleChange} />
+                  <input type="text" name="ifscCode" className="form-input" value={formData.ifscCode} onChange={handleChange} placeholder="Optional" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Account Type</label>
@@ -183,7 +186,7 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
               <div className="grid grid-cols-2 gap-4">
                 <div className="form-group">
                   <label className="form-label">PAN Number</label>
-                  <input type="text" name="panNumber" className="form-input" value={formData.panNumber} onChange={handleChange} />
+                  <input type="text" name="panNumber" className="form-input" value={formData.panNumber} onChange={handleChange} placeholder="Optional" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Tax Regime</label>
@@ -195,9 +198,10 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
               </div>
             )}
           </div>
-          <div className="modal-footer flex justify-between">
+          
+          <div className="modal-footer flex justify-between" style={{ borderTop: '1px solid var(--border-light)' }}>
             {step > 1 ? (
-              <button type="button" className="btn btn-secondary" onClick={() => setStep(step - 1)}>
+              <button type="button" className="btn btn-secondary flex items-center gap-2" onClick={() => setStep(step - 1)}>
                 <ChevronLeft size={16} /> Back
               </button>
             ) : (

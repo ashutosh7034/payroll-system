@@ -10,9 +10,13 @@ router.use(requireAuth);
 
 router.get('/departments', requirePermission('organization.view'), orgController.getDepartments);
 router.post('/departments', requirePermission('organization.manage'), orgController.createDepartment);
+router.put('/departments/:id', requirePermission('organization.manage'), orgController.updateDepartment);
+router.delete('/departments/:id', requirePermission('organization.manage'), orgController.deleteDepartment);
 
 router.get('/locations', requirePermission('organization.view'), orgController.getLocations);
 router.post('/locations', requirePermission('organization.manage'), orgController.createLocation);
+router.put('/locations/:id', requirePermission('organization.manage'), orgController.updateLocation);
+router.delete('/locations/:id', requirePermission('organization.manage'), orgController.deleteLocation);
 
 router.get('/designations', requirePermission('organization.view'), orgController.getDesignations);
 router.post('/designations', requirePermission('organization.manage'), orgController.createDesignation);

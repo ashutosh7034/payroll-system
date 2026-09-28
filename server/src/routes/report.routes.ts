@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { exportPayrollRegisterCsv } from '../controllers/report.controller';
-import { requireAuth } from '../middleware/auth.middleware';
-import { requirePermission } from '../middleware/rbac.middleware';
+import { getReportData, exportReportCsv, exportReportPdf } from '../controllers/report.controller';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
 router.use(requireAuth);
-router.get('/export/payroll-register', requirePermission('payroll.run'), exportPayrollRegisterCsv);
+
+router.get('/:type', getReportData);
+router.get('/:type/export', exportReportCsv);
+router.get('/:type/export-pdf', exportReportPdf);
 
 export default router;

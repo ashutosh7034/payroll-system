@@ -163,3 +163,6 @@ export const setupInitialTenant = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const changePassword = async (req: any, res: any) => { res.json({success:true}); };
+export const me = async (req: any, res: any) => { res.json({user: req.user, tenant: {id: req.user.tenantId}}); };

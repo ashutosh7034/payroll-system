@@ -32,17 +32,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage on mount
-    const storedToken = localStorage.getItem('payflow_token');
-    const storedUser = localStorage.getItem('payflow_user');
-    const storedTenant = localStorage.getItem('payflow_tenant');
+    const verifyAuth = async () => {
+      const storedToken = localStorage.getItem('payflow_token');
+      
+      if (storedToken) {
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+          const res = await fetch(`${baseUrl}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${storedToken}` }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setToken(storedToken);
+            setUser(data.user);
+            setTenant(data.tenant);
+            
+            // Keep localStorage in sync with fresh DB data
+            localStorage.setItem('payflow_user', JSON.stringify(data.user));
+            if (data.tenant) {
+              localStorage.setItem('payflow_tenant', JSON.stringify(data.tenant));
+            } else {
+              localStorage.removeItem('payflow_tenant');
+            }
+          } else {
+            // Token invalid or expired
+            localStorage.removeItem('payflow_token');
+            localStorage.removeItem('payflow_user');
+            localStorage.removeItem('payflow_tenant');
+          }
+        } catch (err) {
+          // Network error or backend down, fallback to localStorage if available so app doesn't brick entirely
+          const storedUser = localStorage.getItem('payflow_user');
+          const storedTenant = localStorage.getItem('payflow_tenant');
+          if (storedUser) {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+            if (storedTenant) setTenant(JSON.parse(storedTenant));
+          }
+        }
+      }
+      setIsLoading(false);
+    };
 
-    if (storedToken && storedUser && storedTenant) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      setTenant(JSON.parse(storedTenant));
-    }
-    setIsLoading(false);
+    verifyAuth();
   }, []);
 
   const login = (newToken: string, newUser: User, newTenant: Tenant) => {
@@ -63,6 +96,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     setTenant(null);
+    
+    // Force a full page reload to completely clear all React state, component caches, and memory
+    window.location.href = '/login';
   };
 
   return (

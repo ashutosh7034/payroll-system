@@ -9,7 +9,7 @@ export const getTimesheets = async (req: Request, res: Response) => {
     const tenantId = (req as any).user?.tenantId;
     if (!tenantId) return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
 
-    const employeeId = req.query.employeeId as string;
+    const employeeId = req.query.employeeId ? String(req.query.employeeId) : undefined;
     const where: any = { tenantId };
     if (employeeId) where.employeeId = employeeId;
 

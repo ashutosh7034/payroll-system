@@ -14,8 +14,29 @@ export const requirePermission = (permissionName: string) => {
 
       // Check if user has the permission directly or via roles
       // For Phase A, since role claims might be in token, check if token has SUPER_ADMIN or specific permission
-      if (user.roles?.includes('Super Admin') || user.roles?.includes('COMPANY_ADMIN')) {
+      if (user.roles?.includes('PLATFORM_SUPER_ADMIN') || user.roles?.includes('TENANT_SUPER_ADMIN') || user.roles?.includes('COMPANY_ADMIN')) {
         return next();
+      }
+
+      // Auditors have read-only access
+      if (user.roles?.includes('AUDITOR') && permissionName.endsWith('.view')) {
+        return next();
+      }
+
+      // Static role fallback (to match frontend)
+      const staticRolePermissions: Record<string, string[]> = {
+        HR: ['organization.view', 'employee.manage', 'employee.view', 'attendance.manage', 'attendance.view', 'leave.manage', 'leave.view', 'reports.view'],
+        PAYROLL: ['employee.view', 'attendance.view', 'leave.view', 'compensation.manage', 'compensation.view', 'payroll.manage', 'payroll.run', 'payroll.view', 'reports.view'],
+        PAYROLL_MANAGER: ['employee.view', 'attendance.view', 'leave.view', 'compensation.manage', 'compensation.view', 'payroll.manage', 'payroll.run', 'payroll.view', 'reports.view'],
+        FINANCE: ['payroll.view', 'finance.manage', 'finance.view', 'reports.view'],
+        COMPLIANCE: ['organization.view', 'employee.view', 'payroll.view', 'reports.view'],
+        MANAGER: ['employee.view', 'attendance.view', 'leave.view', 'reports.view'],
+      };
+
+      for (const role of user.roles || []) {
+        if (staticRolePermissions[role]?.includes(permissionName)) {
+          return next();
+        }
       }
 
       // Query database for permissions if needed, or rely on token.
@@ -40,7 +61,7 @@ export const requirePermission = (permissionName: string) => {
 
       let hasPermission = false;
       for (const ur of dbUser.userRoles) {
-        if (ur.role.name === 'Super Admin' || ur.role.name === 'COMPANY_ADMIN') {
+        if (ur.role.name === 'PLATFORM_SUPER_ADMIN' || ur.role.name === 'TENANT_SUPER_ADMIN' || ur.role.name === 'COMPANY_ADMIN') {
           hasPermission = true;
           break;
         }

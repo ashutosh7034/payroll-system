@@ -1,0 +1,543 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          String       @id @default(uuid())
+  name        String
+  domain      String?      @unique
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users       User[]
+  departments Department[]
+  locations   Location[]
+  legalEntities LegalEntity[]
+  employees   Employee[]
+  designations Designation[]
+  costCenters  CostCenter[]
+  auditLogs    AuditLog[]
+  statutoryRules StatutoryRule[]
+
+  salaryStructures SalaryStructure[]
+  salaryComponents SalaryComponent[]
+  salaryFormulas   SalaryFormula[]
+  shifts           Shift[]
+  leavePolicies    LeavePolicy[]
+  holidays         Holiday[]
+  payrollRuns      PayrollRun[]
+}
+
+model User {
+  id           String      @id @default(uuid())
+  tenantId     String
+  email        String      
+  passwordHash String
+  firstName    String
+  lastName     String
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tenant       Tenant      @relation(fields: [tenantId], references: [id])
+  userRoles    UserRole[]
+
+  @@unique([tenantId, email])
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  userRoles   UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  roles       RolePermission[]
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  employees   Employee[]
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  address   String?
+  city      String?
+  state     String?
+  country   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  employees Employee[]
+}
+
+model LegalEntity {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  regNumber String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  employees Employee[]
+}
+
+model Designation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  employees   Employee[]
+}
+
+model CostCenter {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  code        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  employees   Employee[]
+}
+
+model Employee {
+  id             String   @id @default(uuid())
+  tenantId       String
+  employeeId     String
+  firstName      String
+  lastName       String
+  email          String?
+  status         String   @default("ACTIVE") // ACTIVE, INACTIVE, ON_LEAVE
+  
+  departmentId   String?
+  locationId     String?
+  legalEntityId  String?
+  designationId  String?
+  costCenterId   String?
+  managerId      String?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant       @relation(fields: [tenantId], references: [id])
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  location       Location?    @relation(fields: [locationId], references: [id])
+  legalEntity    LegalEntity? @relation(fields: [legalEntityId], references: [id])
+  designation    Designation? @relation(fields: [designationId], references: [id])
+  costCenter     CostCenter?  @relation(fields: [costCenterId], references: [id])
+  
+  manager        Employee?    @relation("ManagerToEmployee", fields: [managerId], references: [id])
+  subordinates   Employee[]   @relation("ManagerToEmployee")
+  
+  employment     Employment?
+  bankDetails    EmployeeBank?
+  taxProfile     EmployeeTaxProfile?
+  salaryRevisions SalaryRevision[]
+  attendanceRecords AttendanceRecord[]
+  leaveBalances     LeaveBalance[]
+  leaveRequests     LeaveRequest[]
+
+  shiftId        String?
+  shift          Shift? @relation(fields: [shiftId], references: [id])
+
+  payslips       Payslip[]
+  exceptions     PayrollException[]
+  history        EmployeeHistory[]
+
+  @@unique([tenantId, employeeId])
+}
+
+model EmployeeHistory {
+  id           String   @id @default(uuid())
+  employeeId   String
+  fieldChanged String
+  oldValue     String?
+  newValue     String?
+  effectiveDate DateTime @default(now())
+  changedBy    String?
+  createdAt    DateTime @default(now())
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValue  String?
+  newValue  String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Employment {
+  id             String   @id @default(uuid())
+  employeeId     String   @unique
+  employmentType String   // FULL_TIME, PART_TIME, CONTRACTOR
+  joiningDate    DateTime
+  exitDate       DateTime?
+  designation    String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee @relation(fields: [employeeId], references: [id])
+}
+
+model EmployeeBank {
+  id             String   @id @default(uuid())
+  employeeId     String   @unique
+  bankName       String
+  accountNumber  String
+  ifscCode       String
+  accountType    String   @default("SAVINGS")
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee @relation(fields: [employeeId], references: [id])
+}
+
+model EmployeeTaxProfile {
+  id             String   @id @default(uuid())
+  employeeId     String   @unique
+  panNumber      String?
+  taxRegime      String   @default("NEW") // OLD, NEW
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee @relation(fields: [employeeId], references: [id])
+}
+
+model SalaryStructure {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  version     Int      @default(1)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  components  SalaryStructureComponent[]
+}
+
+model SalaryComponent {
+  id             String   @id @default(uuid())
+  tenantId       String
+  name           String
+  code           String
+  type           String   // EARNING, DEDUCTION, STATUTORY
+  isTaxable      Boolean  @default(true)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  structures     SalaryStructureComponent[]
+  formulas       SalaryFormula[]
+  payslipComponents PayslipComponent[]
+}
+
+model SalaryStructureComponent {
+  id                  String   @id @default(uuid())
+  salaryStructureId   String
+  salaryComponentId   String
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  structure           SalaryStructure @relation(fields: [salaryStructureId], references: [id])
+  component           SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+
+  @@unique([salaryStructureId, salaryComponentId])
+}
+
+model SalaryFormula {
+  id                String   @id @default(uuid())
+  tenantId          String
+  salaryComponentId String
+  expression        String   // e.g. "0.5 * BASIC" or "FIXED"
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant            Tenant   @relation(fields: [tenantId], references: [id])
+  component         SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+}
+
+model SalaryRevision {
+  id                String   @id @default(uuid())
+  employeeId        String
+  previousCTC       Float?
+  newCTC            Float
+  effectiveDate     DateTime
+  status            String   // DRAFT, APPROVED, REJECTED
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  employee          Employee @relation(fields: [employeeId], references: [id])
+}
+
+// ==========================
+// PHASE 4: TIME & ATTENDANCE
+// ==========================
+
+model Shift {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  startTime   String   // HH:mm
+  endTime     String   // HH:mm
+  graceTime   Int      @default(0) // minutes
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  employees   Employee[]
+}
+
+model AttendanceRecord {
+  id          String   @id @default(uuid())
+  employeeId  String
+  date        DateTime
+  status      String   // PRESENT, ABSENT, HALF_DAY, ON_LEAVE, HOLIDAY, WEEKOFF
+  punchIn     DateTime?
+  punchOut    DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  
+  @@unique([employeeId, date])
+}
+
+model LeavePolicy {
+  id               String   @id @default(uuid())
+  tenantId         String
+  name             String
+  type             String   // SICK, CASUAL, EARNED, MATERNITY
+  daysPerYear      Float
+  canCarryForward  Boolean  @default(false)
+  maxCarryForward  Float    @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  balances         LeaveBalance[]
+  requests         LeaveRequest[]
+}
+
+model LeaveBalance {
+  id             String   @id @default(uuid())
+  employeeId     String
+  leavePolicyId  String
+  year           Int
+  allotted       Float
+  consumed       Float    @default(0)
+  balance        Float
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  policy         LeavePolicy  @relation(fields: [leavePolicyId], references: [id])
+
+  @@unique([employeeId, leavePolicyId, year])
+}
+
+model LeaveRequest {
+  id             String   @id @default(uuid())
+  employeeId     String
+  leavePolicyId  String
+  startDate      DateTime
+  endDate        DateTime
+  days           Float
+  reason         String?
+  status         String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  policy         LeavePolicy  @relation(fields: [leavePolicyId], references: [id])
+}
+
+model Holiday {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  date        DateTime
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// ==========================
+// PHASE 5: PAYROLL ENGINE
+// ==========================
+
+model PayrollRun {
+  id              String   @id @default(uuid())
+  tenantId        String
+  runPeriodMonth  Int
+  runPeriodYear   Int
+  status          String   @default("DRAFT") // DRAFT, PROCESSING, REVIEW, APPROVED, PAID
+  processedBy     String?  // userId
+  approvedBy      String?  // userId
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  payslips        Payslip[]
+  exceptions      PayrollException[]
+}
+
+model Payslip {
+  id              String   @id @default(uuid())
+  payrollRunId    String
+  employeeId      String
+  grossPay        Float
+  netPay          Float
+  totalDeductions Float
+  status          String   @default("DRAFT") // DRAFT, FINALIZED, ISSUED
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  payrollRun      PayrollRun @relation(fields: [payrollRunId], references: [id])
+  employee        Employee   @relation(fields: [employeeId], references: [id])
+  components      PayslipComponent[]
+  
+  @@unique([payrollRunId, employeeId])
+}
+
+model PayslipComponent {
+  id                String   @id @default(uuid())
+  payslipId         String
+  salaryComponentId String
+  amount            Float
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  payslip           Payslip         @relation(fields: [payslipId], references: [id])
+  component         SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+}
+
+model PayrollException {
+  id              String   @id @default(uuid())
+  payrollRunId    String
+  employeeId      String
+  severity        String   // WARNING, ERROR
+  message         String
+  resolved        Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  payrollRun      PayrollRun @relation(fields: [payrollRunId], references: [id])
+  employee        Employee   @relation(fields: [employeeId], references: [id])
+}
+
+// ==========================
+// PHASE 6: STATUTORY ENGINE
+// ==========================
+
+model StatutoryRule {
+  id              String   @id @default(uuid())
+  tenantId        String
+  statutoryType   String   // PF, ESI, PT, LWF, TDS
+  employeeRate    Float?
+  employerRate    Float?
+  wageCeiling     Float?
+  wageThreshold   Float?
+  isActive        Boolean  @default(true)
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+}

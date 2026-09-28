@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 dotenv.config();
 
 import authRoutes from './routes/auth.routes';
+import platformRoutes from './routes/platform.routes';
 import employeeRoutes from './routes/employee.routes';
 import compensationRoutes from './routes/compensation.routes';
 import attendanceRoutes from './routes/attendance.routes';
@@ -19,6 +20,7 @@ import leaveRoutes from './routes/leave.routes';
 import payrollInputRoutes from './routes/payroll-input.routes';
 import timesheetRoutes from './routes/timesheet.routes';
 import reportRoutes from './routes/report.routes';
+import payslipRoutes from './routes/payslip.routes';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -35,6 +37,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/platform', platformRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/compensation', compensationRoutes);
 app.use('/api/attendance', attendanceRoutes);
@@ -48,6 +51,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll-inputs', payrollInputRoutes);
 app.use('/api/timesheets', timesheetRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/payslips', payslipRoutes);
 
 // Basic health check
 app.get('/api/health', async (req: Request, res: Response) => {

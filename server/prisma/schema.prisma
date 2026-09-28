@@ -15,6 +15,7 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  profile        TenantProfile?
   users          User[]
   departments    Department[]
   locations      Location[]
@@ -111,7 +112,11 @@ model Department {
   id          String   @id @default(uuid())
   tenantId    String
   name        String
+  code        String?  // Added safely
   description String?
+  headId      String?  // Added safely
+  locationId  String?  // Added safely
+  parentId    String?  // Added safely
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -119,24 +124,35 @@ model Department {
   tenant      Tenant        @relation(fields: [tenantId], references: [id])
   employees   Employee[]
   JournalLine JournalLine[]
+  head        Employee?     @relation("DepartmentHead", fields: [headId], references: [id])
+  location    Location?     @relation("DepartmentLocation", fields: [locationId], references: [id])
+  parent      Department?   @relation("DepartmentParent", fields: [parentId], references: [id])
+  children    Department[]  @relation("DepartmentParent")
 }
 
 model Location {
-  id        String   @id @default(uuid())
-  tenantId  String
-  name      String
-  address   String?
-  city      String?
-  state     String?
-  country   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  tenantId      String
+  name          String
+  code          String?  // Added safely
+  address       String?
+  addressLine2  String?  // Added safely
+  city          String?
+  state         String?
+  country       String?
+  pincode       String?  // Added safely
+  contactPerson String?  // Added safely
+  contactEmail  String?  // Added safely
+  contactPhone  String?  // Added safely
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   tenant      Tenant        @relation(fields: [tenantId], references: [id])
   employees   Employee[]
   holidays    Holiday[]
   JournalLine JournalLine[]
+  departments Department[]  @relation("DepartmentLocation")
 }
 
 model LegalEntity {
@@ -233,6 +249,7 @@ model Employee {
   PaymentInstruction    PaymentInstruction[]
   taxDeclarations       TaxDeclaration[]
   taxApprovals          TaxDeclaration[]       @relation("TaxApprover")
+  managedDepartments    Department[]           @relation("DepartmentHead")
 
   @@unique([tenantId, employeeId])
 }
@@ -930,4 +947,40 @@ model TaxDeclarationItem {
   updatedAt DateTime @updatedAt
 
   taxDeclaration TaxDeclaration @relation(fields: [taxDeclarationId], references: [id], onDelete: Cascade)
+}
+model TenantProfile {
+  id        String   @id @default(uuid())
+  tenantId  String   @unique
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  legalName       String?
+  displayName     String?
+  companyType     String?
+  industry        String?
+  website         String?
+  officialEmail   String?
+  officialPhone   String?
+
+  cin             String?
+  pan             String?
+  tan             String?
+  gstin           String?
+
+  registeredAddress String?
+  city            String?
+  state           String?
+  country         String?
+  pincode         String?
+
+  incorporationDate DateTime?
+  financialYear   String?
+
+  contactName     String?
+  contactDesignation String?
+  contactEmail    String?
+  contactPhone    String?
+  contactAlternatePhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

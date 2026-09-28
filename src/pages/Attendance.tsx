@@ -18,7 +18,7 @@ const Attendance = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setEmployees(data);
+        setEmployees(data.data || data);
       }
     } catch (err) {
       console.error(err);

@@ -1,0 +1,50 @@
+export const getPlatformDashboardMetrics = async (req: Request, res: Response) => {
+  try {
+    const totalTenants = await prisma.tenant.count({ where: { name: { not: 'PAYFLOW_PLATFORM' } } });
+    const activeTenants = await prisma.tenant.count({ where: { name: { not: 'PAYFLOW_PLATFORM' }, isActive: true } });
+    const suspendedTenants = await prisma.tenant.count({ where: { name: { not: 'PAYFLOW_PLATFORM' }, isActive: false } });
+    
+    const totalUsers = await prisma.user.count({
+      where: {
+        tenant: {
+          name: { not: 'PAYFLOW_PLATFORM' }
+        }
+      }
+    });
+
+    const activeUsers = await prisma.user.count({
+      where: {
+        isActive: true,
+        tenant: {
+          name: { not: 'PAYFLOW_PLATFORM' }
+        }
+      }
+    });
+    
+    const totalEmployees = await prisma.employee.count();
+
+    // Chart Data (Tenants created per month - simple mockup with real dates if we had more history, but we group by creation date)
+    const tenants = await prisma.tenant.findMany({
+      where: { name: { not: 'PAYFLOW_PLATFORM' } },
+      select: { createdAt: true }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        kpi: {
+          totalTenants,
+          activeTenants,
+          suspendedTenants,
+          totalUsers,
+          activeUsers,
+          totalEmployees
+        },
+        health: 'Operational',
+        tenants
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: { message: 'Failed to fetch platform metrics' } });
+  }
+};
