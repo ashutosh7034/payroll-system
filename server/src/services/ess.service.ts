@@ -40,7 +40,7 @@ export class EssService {
     });
 
     // 6. Recent reimbursements
-    const recentReimbursements = await prisma.reimbursement.findMany({
+    const recentReimbursements = await prisma.reimbursementClaim.findMany({
       where: { employeeId, tenantId },
       orderBy: { createdAt: 'desc' },
       take: 5

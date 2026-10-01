@@ -79,12 +79,17 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
       departmentId, locationId, legalEntityId, designationId, costCenterId, managerId,
       employmentType, joiningDate, exitDate,
       bankName, accountNumber, ifscCode, accountType,
-      panNumber, taxRegime
+      panNumber, taxRegime,
+      createLogin, password
     } = req.body;
 
     // Backend validations
     if (!employeeId || !firstName || !lastName || !joiningDate || !employmentType) {
       return res.status(400).json(errorResponse('VALIDATION_ERROR', 'Missing required fields'));
+    }
+
+    if (createLogin && !email) {
+      return res.status(400).json(errorResponse('VALIDATION_ERROR', 'Email is required to create a login'));
     }
 
     // Check unique employeeId for tenant
@@ -139,6 +144,40 @@ export const createEmployee = async (req: AuthRequest, res: Response) => {
       await tx.auditLog.create({
         data: { tenantId, userId, action: 'CREATE', entity: 'Employee', entityId: emp.id, newValue: JSON.stringify({ employeeId, firstName, lastName }) }
       });
+
+      if (createLogin) {
+        let empRole = await tx.role.findUnique({ where: { name: 'EMPLOYEE' } });
+        if (!empRole) {
+          empRole = await tx.role.create({ data: { name: 'EMPLOYEE', description: 'Employee Self Service' } });
+        }
+        
+        const bcrypt = require('bcryptjs');
+        const defaultPassword = password || Math.random().toString(36).slice(-8) + 'A1!';
+        const passwordHash = await bcrypt.hash(defaultPassword, 10);
+        
+        const existingUser = await tx.user.findFirst({ where: { email, tenantId } });
+        if (existingUser) {
+          throw new Error('User email already exists for this tenant');
+        }
+
+        const user = await tx.user.create({
+          data: {
+            tenantId,
+            email,
+            firstName,
+            lastName,
+            passwordHash
+          }
+        });
+
+        await tx.userRole.create({
+          data: { userId: user.id, roleId: empRole.id }
+        });
+
+        await tx.auditLog.create({
+          data: { tenantId, userId, action: 'CREATE', entity: 'User', entityId: user.id, newValue: JSON.stringify({ email, roles: ['EMPLOYEE'] }) }
+        });
+      }
 
       return emp;
     });
@@ -198,5 +237,47 @@ export const updateEmployee = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error updating employee:', error);
     res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+
+export const uploadEmployeeDocument = async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { type, name, url, notes } = req.body;
+    
+    const doc = await (prisma as any).employeeDocument.create({
+      data: {
+        employeeId: id,
+        type, name, url, notes,
+        uploadedBy: req.user?.id
+      }
+    });
+
+    await prisma.auditLog.create({
+      data: { tenantId: req.user.tenantId, userId: req.user.id, action: 'UPLOAD_DOCUMENT', entity: 'Employee', entityId: id, newValue: name }
+    });
+
+    res.json({ success: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
+  }
+};
+
+export const deleteEmployeeDocument = async (req: any, res: any) => {
+  try {
+    const { id, docId } = req.params;
+    
+    await (prisma as any).employeeDocument.delete({
+      where: { id: docId }
+    });
+
+    await prisma.auditLog.create({
+      data: { tenantId: req.user.tenantId, userId: req.user.id, action: 'DELETE_DOCUMENT', entity: 'Employee', entityId: id }
+    });
+
+    res.json({ success: true, data: { deleted: true } });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { message: 'Internal server error' } });
   }
 };

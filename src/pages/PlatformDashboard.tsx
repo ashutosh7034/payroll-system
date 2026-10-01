@@ -129,6 +129,8 @@ const PlatformDashboard = () => {
         <KPICard title="Suspended" value={kpi.suspendedTenants} accent="warning" icon={<TrendingUp size={20} className="rotate-180" />} desc="Requires attention" />
         <KPICard title="Total Users" value={kpi.totalUsers} accent="primary-dark" icon={<Users size={20} />} desc="Platform & Tenant users" />
         <KPICard title="Total Employees" value={kpi.totalEmployees} accent="info" icon={<Briefcase size={20} />} desc="Across all companies" />
+        <KPICard title="Active Payroll Runs" value={kpi.activePayrollRuns} accent="primary" icon={<Clock size={20} />} desc="Processing currently" />
+        <KPICard title="Failed Payroll Runs" value={kpi.failedPayrollRuns} accent="error" icon={<AlertCircle size={20} />} desc="Needs immediate review" />
       </div>
 
       {/* Analytics Row */}
@@ -142,7 +144,7 @@ const PlatformDashboard = () => {
                 <PieChart>
                   <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                     {statusData.map((entry, index) => (
-                      <Cell key={`cell-\${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }} />

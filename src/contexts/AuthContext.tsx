@@ -6,6 +6,7 @@ interface User {
   firstName: string;
   lastName: string;
   roles: string[];
+  employeeId?: string;
 }
 
 interface Tenant {

@@ -23,5 +23,12 @@ router.post('/designations', requirePermission('organization.manage'), orgContro
 
 router.get('/legal-entities', requirePermission('organization.view'), orgController.getLegalEntities);
 router.post('/legal-entities', requirePermission('organization.manage'), orgController.createLegalEntity);
+router.put('/legal-entities/:id', requirePermission('organization.manage'), orgController.updateLegalEntity);
+router.delete('/legal-entities/:id', requirePermission('organization.manage'), orgController.deleteLegalEntity);
+
+router.get('/cost-centers', requirePermission('organization.view'), orgController.getCostCenters);
+router.post('/cost-centers', requirePermission('organization.manage'), orgController.createCostCenter);
+router.put('/cost-centers/:id', requirePermission('organization.manage'), orgController.updateCostCenter);
+router.delete('/cost-centers/:id', requirePermission('organization.manage'), orgController.deleteCostCenter);
 
 export default router;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Filter, Download, MoreHorizontal, Plus, Loader2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import EmployeeDetailModal from '../components/employee/EmployeeDetailModal';
 
 // Basic wrapper around fetch for API calls
 const fetchApi = async (url: string, token: string | null, options?: RequestInit) => {
@@ -29,7 +30,8 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
     departmentId: '', locationId: '', legalEntityId: '', designationId: '', costCenterId: '', managerId: '',
     employmentType: 'FULL_TIME', joiningDate: '', exitDate: '',
     bankName: '', accountNumber: '', ifscCode: '', accountType: 'SAVINGS',
-    panNumber: '', taxRegime: 'NEW'
+    panNumber: '', taxRegime: 'NEW',
+    createLogin: false, password: ''
   });
 
   if (!isOpen) return null;
@@ -38,7 +40,14 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (step === 1 && formData.createLogin && !formData.email) {
+      setError('Email is required to create a login');
+      return;
+    }
+    
     if (step < 5) {
+      setError('');
       setStep(step + 1);
       return;
     }
@@ -57,98 +66,177 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
     }
   };
 
+  const stepsList = [
+    { num: 1, label: 'Personal' },
+    { num: 2, label: 'Employment' },
+    { num: 3, label: 'Organization' },
+    { num: 4, label: 'Bank' },
+    { num: 5, label: 'Tax' }
+  ];
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
-      <div className="modal-content" style={{ maxWidth: '600px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+      <div className="modal-content" style={{ width: '90%', maxWidth: '800px', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+        
+        {/* Header - Fixed */}
+        <div className="modal-header" style={{ flexShrink: 0 }}>
           <h3 className="card-title">Add New Employee</h3>
-          <button className="btn-ghost" onClick={onClose} type="button">&times;</button>
+          <button className="btn-ghost" onClick={onClose} type="button" style={{ fontSize: '20px', lineHeight: '1', padding: '0 8px' }}>&times;</button>
         </div>
         
-        <div className="px-6 py-4 border-b border-[var(--border-light)] bg-[var(--bg-app)] text-small flex justify-between overflow-x-auto">
-          {[1, 2, 3, 4, 5].map((s) => (
-            <div key={s} className="flex items-center gap-2">
-              <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: step >= s ? 'var(--primary-dark)' : 'var(--bg-surface-active)', color: step >= s ? 'white' : 'var(--text-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>{s}</div>
-              <span style={{ color: step >= s ? 'var(--text-primary)' : 'var(--text-tertiary)', fontWeight: step === s ? 600 : 500 }}>
-                {s === 1 ? 'Personal' : s === 2 ? 'Employment' : s === 3 ? 'Organization' : s === 4 ? 'Bank' : 'Tax'}
-              </span>
-            </div>
-          ))}
+        {/* Step Indicator - Fixed */}
+        <div style={{ flexShrink: 0, padding: '16px 24px', borderBottom: '1px solid var(--border-light)', backgroundColor: 'var(--bg-app)', overflowX: 'auto' }}>
+          <div className="flex items-center justify-between" style={{ minWidth: '500px' }}>
+            {stepsList.map((s, idx) => (
+              <React.Fragment key={s.num}>
+                <div className="flex items-center gap-2">
+                  <div style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    backgroundColor: step >= s.num ? 'var(--primary-dark)' : 'var(--bg-surface-active)',
+                    color: step >= s.num ? 'white' : 'var(--text-tertiary)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 600, fontSize: '12px'
+                  }}>
+                    {step > s.num ? '✓' : s.num}
+                  </div>
+                  <span style={{
+                    color: step >= s.num ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    fontWeight: step >= s.num ? 600 : 500,
+                    fontSize: '13px'
+                  }}>
+                    {s.label}
+                  </span>
+                </div>
+                {idx < stepsList.length - 1 && (
+                  <div style={{
+                    flex: 1, height: '1px', margin: '0 16px',
+                    backgroundColor: step > s.num ? 'var(--primary-dark)' : 'var(--border-light)'
+                  }} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
         </div>
 
+        {/* Body - Scrollable */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          <div className="modal-body" style={{ minHeight: '300px', flex: 1, overflowY: 'auto' }}>
-            {error && <div className="p-3 mb-4 text-sm bg-[var(--error-bg)] text-[var(--error-color)] rounded-md border border-[var(--error-color)]">{error}</div>}
+          <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+            {error && <div className="p-3 mb-4 text-sm rounded-md" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error-color)', border: '1px solid var(--error-color)' }}>{error}</div>}
             
             {step === 1 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
-                  <label className="form-label">Employee ID <span className="text-[var(--danger-color)]">*</span></label>
-                  <input type="text" name="employeeId" className="form-input" required value={formData.employeeId} onChange={handleChange} />
+              <div className="flex flex-col" style={{ gap: '24px' }}>
+                <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '20px' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Employee ID <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                    <input type="text" name="employeeId" className="form-input" required value={formData.employeeId} onChange={handleChange} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Email <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                    <input type="email" name="email" className="form-input" required value={formData.email} onChange={handleChange} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">First Name <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                    <input type="text" name="firstName" className="form-input" required value={formData.firstName} onChange={handleChange} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Last Name <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                    <input type="text" name="lastName" className="form-input" required value={formData.lastName} onChange={handleChange} />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Status <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                    <select name="status" className="form-input" value={formData.status} onChange={handleChange}>
+                      <option value="ACTIVE">Active</option>
+                      <option value="INACTIVE">Inactive</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Email <span className="text-[var(--danger-color)]">*</span></label>
-                  <input type="email" name="email" className="form-input" required value={formData.email} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">First Name <span className="text-[var(--danger-color)]">*</span></label>
-                  <input type="text" name="firstName" className="form-input" required value={formData.firstName} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Last Name <span className="text-[var(--danger-color)]">*</span></label>
-                  <input type="text" name="lastName" className="form-input" required value={formData.lastName} onChange={handleChange} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Status <span className="text-[var(--danger-color)]">*</span></label>
-                  <select name="status" className="form-input" value={formData.status} onChange={handleChange}>
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                  </select>
+                
+                <div style={{ paddingTop: '20px', borderTop: '1px solid var(--border-light)' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px', fontSize: '14px' }}>
+                    Employee Self-Service (ESS)
+                  </div>
+                  
+                  <div className="flex items-start" style={{ gap: '12px', marginBottom: '16px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="createLogin"
+                      checked={formData.createLogin} 
+                      onChange={(e) => setFormData({...formData, createLogin: e.target.checked})}
+                      style={{ marginTop: '4px', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <label htmlFor="createLogin" style={{ display: 'block', fontWeight: 500, color: 'var(--text-primary)', cursor: 'pointer', fontSize: '14px' }}>
+                        Allow this employee to access the employee portal
+                      </label>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        Creates access to personal attendance, leave and payslips.
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {formData.createLogin && (
+                    <div style={{ backgroundColor: 'var(--bg-app)', padding: '16px', borderRadius: 'var(--radius-card)', border: '1px solid var(--border-light)' }}>
+                      <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label className="form-label">Password <span style={{ color: 'var(--error-color)' }}>*</span></label>
+                          <div className="flex" style={{ gap: '8px' }}>
+                            <input type="text" name="password" className="form-input" required={formData.createLogin} value={formData.password} onChange={handleChange} placeholder="Enter or generate password" />
+                            <button type="button" className="btn btn-secondary" onClick={() => setFormData({...formData, password: Math.random().toString(36).slice(-8) + 'A1!'})}>
+                              Generate
+                            </button>
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                            Copy this password to share with the employee.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {step === 2 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
-                  <label className="form-label">Employment Type <span className="text-[var(--danger-color)]">*</span></label>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '20px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Employment Type <span style={{ color: 'var(--error-color)' }}>*</span></label>
                   <select name="employmentType" className="form-input" required value={formData.employmentType} onChange={handleChange}>
                     <option value="FULL_TIME">Full Time</option>
                     <option value="PART_TIME">Part Time</option>
                     <option value="CONTRACTOR">Contractor</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Joining Date <span className="text-[var(--danger-color)]">*</span></label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Joining Date <span style={{ color: 'var(--error-color)' }}>*</span></label>
                   <input type="date" name="joiningDate" className="form-input" required value={formData.joiningDate} onChange={handleChange} />
                 </div>
               </div>
             )}
 
             {step === 3 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '20px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Legal Entity</label>
                   <select name="legalEntityId" className="form-input" value={formData.legalEntityId} onChange={handleChange}>
                     <option value="">Select Entity (Optional)</option>
                     {orgData.entities.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Location</label>
                   <select name="locationId" className="form-input" value={formData.locationId} onChange={handleChange}>
                     <option value="">Select Location (Optional)</option>
                     {orgData.locations.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Department</label>
                   <select name="departmentId" className="form-input" value={formData.departmentId} onChange={handleChange}>
                     <option value="">Select Department (Optional)</option>
                     {orgData.departments.map((e: any) => <option key={e.id} value={e.id}>{e.name}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Designation</label>
                   <select name="designationId" className="form-input" value={formData.designationId} onChange={handleChange}>
                     <option value="">Select Designation (Optional)</option>
@@ -159,20 +247,20 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
             )}
 
             {step === 4 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '20px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Bank Name</label>
                   <input type="text" name="bankName" className="form-input" value={formData.bankName} onChange={handleChange} placeholder="Optional" />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Account Number</label>
                   <input type="text" name="accountNumber" className="form-input" value={formData.accountNumber} onChange={handleChange} placeholder="Optional" />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">IFSC Code</label>
                   <input type="text" name="ifscCode" className="form-input" value={formData.ifscCode} onChange={handleChange} placeholder="Optional" />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Account Type</label>
                   <select name="accountType" className="form-input" value={formData.accountType} onChange={handleChange}>
                     <option value="SAVINGS">Savings</option>
@@ -183,12 +271,12 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
             )}
 
             {step === 5 && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="form-group">
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '20px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">PAN Number</label>
                   <input type="text" name="panNumber" className="form-input" value={formData.panNumber} onChange={handleChange} placeholder="Optional" />
                 </div>
-                <div className="form-group">
+                <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label">Tax Regime</label>
                   <select name="taxRegime" className="form-input" value={formData.taxRegime} onChange={handleChange}>
                     <option value="NEW">New Regime</option>
@@ -199,19 +287,25 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
             )}
           </div>
           
-          <div className="modal-footer flex justify-between" style={{ borderTop: '1px solid var(--border-light)' }}>
-            {step > 1 ? (
+          {/* Footer - Fixed */}
+          <div className="modal-footer" style={{ flexShrink: 0, padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid var(--border-light)' }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Cancel
+            </button>
+            {step > 1 && (
               <button type="button" className="btn btn-secondary flex items-center gap-2" onClick={() => setStep(step - 1)}>
                 <ChevronLeft size={16} /> Back
               </button>
-            ) : (
-              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
             )}
-            
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Saving...' : step < 5 ? (
+            <button type="submit" className="btn btn-primary flex items-center gap-2" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="animate-spin" size={16} />
+                  Saving...
+                </>
+              ) : step < 5 ? (
                 <>Next <ChevronRight size={16} /></>
-              ) : 'Complete Profile'}
+              ) : 'Create Employee'}
             </button>
           </div>
         </form>
@@ -220,11 +314,13 @@ const EmployeeFormModal = ({ isOpen, onClose, onSuccess, token, orgData }: any) 
   );
 };
 
+
 const EmployeesList = () => {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const { token } = useAuth();
   
   const [orgData, setOrgData] = useState({

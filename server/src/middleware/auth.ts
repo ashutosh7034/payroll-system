@@ -7,6 +7,7 @@ export interface AuthRequest extends Request {
     tenantId: string;
     email: string;
     roles: string[];
+    employeeId?: string | null;
   };
 }
 

@@ -127,7 +127,121 @@ export const createLegalEntity = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateDepartment = async (req: any, res: any) => { res.json({success:true}); };
-export const deleteDepartment = async (req: any, res: any) => { res.json({success:true}); };
-export const updateLocation = async (req: any, res: any) => { res.json({success:true}); };
-export const deleteLocation = async (req: any, res: any) => { res.json({success:true}); };
+export const updateLegalEntity = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, regNumber, address, city, state, country, isActive } = req.body;
+    const rec = await prisma.legalEntity.update({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId },
+      data: { name, regNumber, address, city, state, country, isActive }
+    });
+    res.json(successResponse(rec));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const deleteLegalEntity = async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.legalEntity.delete({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId }
+    });
+    res.json(successResponse({ deleted: true }));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const getCostCenters = async (req: AuthRequest, res: Response) => {
+  try {
+    const records = await prisma.costCenter.findMany({ where: { tenantId: req.user?.tenantId } });
+    res.json(successResponse(records));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const createCostCenter = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, code, description, isActive } = req.body;
+    if (!name || !code) return res.status(400).json(errorResponse('BAD_REQUEST', 'Missing required fields'));
+    
+    const rec = await prisma.costCenter.create({
+      data: { tenantId: req.user?.tenantId as string, name, code, description, isActive }
+    });
+    res.status(201).json(successResponse(rec));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const updateCostCenter = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, code, description, isActive } = req.body;
+    const rec = await prisma.costCenter.update({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId },
+      data: { name, code, description, isActive }
+    });
+    res.json(successResponse(rec));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const deleteCostCenter = async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.costCenter.delete({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId }
+    });
+    res.json(successResponse({ deleted: true }));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const updateDepartment = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, description, isActive } = req.body;
+    const rec = await prisma.department.update({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId },
+      data: { name, description, isActive }
+    });
+    res.json(successResponse(rec));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const deleteDepartment = async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.department.delete({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId }
+    });
+    res.json(successResponse({ deleted: true }));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const updateLocation = async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, address, city, state, country, isActive } = req.body;
+    const rec = await prisma.location.update({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId },
+      data: { name, address, city, state, country, isActive }
+    });
+    res.json(successResponse(rec));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};
+
+export const deleteLocation = async (req: AuthRequest, res: Response) => {
+  try {
+    await prisma.location.delete({
+      where: { id: req.params.id as string, tenantId: req.user?.tenantId }
+    });
+    res.json(successResponse({ deleted: true }));
+  } catch (err) {
+    res.status(500).json(errorResponse('SERVER_ERROR', 'Internal server error'));
+  }
+};

@@ -3,6 +3,12 @@ import { requireAuth } from '../middleware/auth';
 import { requirePermission } from '../middleware/rbac.middleware';
 import { getTenants, createTenant, getTenantById, updateTenantStatus, updateTenantProfile, resetSuperAdmin, getPlatformDashboardMetrics } from '../controllers/platform.controller';
 import { getTenantConfiguration, updateTenantConfiguration, createStatutoryRule, updateStatutoryRule, updateStatutoryRuleStatus, deleteStatutoryRule } from '../controllers/platformConfig.controller';
+import { getPlatformUsers, createPlatformUser, updatePlatformUserStatus, updatePlatformUserRoles } from '../controllers/platformUsers.controller';
+import { getPlatformRoles, getPermissions, updateRolePermissions } from '../controllers/platformRoles.controller';
+import { getPlatformModules, getTenantModules, updateTenantModules } from '../controllers/platformModules.controller';
+import { getSystemHealth } from '../controllers/platformHealth.controller';
+import { getPlatformAuditLogs } from '../controllers/platformAudit.controller';
+import { getPlatformConfig, updatePlatformConfig } from '../controllers/platformGlobalConfig.controller';
 
 const router = Router();
 
@@ -48,5 +54,29 @@ router.get('/tenants/:tenantId', getTenantById);
 router.put('/tenants/:tenantId/status', updateTenantStatus);
 router.put('/tenants/:tenantId/profile', updateTenantProfile);
 router.post('/tenants/:tenantId/reset-admin', resetSuperAdmin);
+
+// Platform Users & Roles
+router.get('/roles', getPlatformRoles);
+router.get('/permissions', getPermissions);
+router.put('/roles/:roleId/permissions', updateRolePermissions);
+router.get('/users', getPlatformUsers);
+router.post('/users', createPlatformUser);
+router.put('/users/:id/status', updatePlatformUserStatus);
+router.put('/users/:id/roles', updatePlatformUserRoles);
+
+// Platform Modules
+router.get('/modules', getPlatformModules);
+router.get('/tenants/:tenantId/modules', getTenantModules);
+router.put('/tenants/:tenantId/modules', updateTenantModules);
+
+// System Health
+router.get('/health', getSystemHealth);
+
+// Platform Audit
+router.get('/audit', getPlatformAuditLogs);
+
+// Platform Configuration
+router.get('/configuration', getPlatformConfig);
+router.put('/configuration', updatePlatformConfig);
 
 export default router;

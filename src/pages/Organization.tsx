@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, AlertCircle, CheckCircle2, Loader2, Search, MoreHorizontal, Edit2, Trash2 } from 'lucide-react';
 import { checkPermission } from '../utils/permissions';
+import OrganizationLegalEntities from '../components/organization/OrganizationLegalEntities';
+import OrganizationCostCenters from '../components/organization/OrganizationCostCenters';
 
 export default function Organization() {
-  const [data, setData] = useState<{ departments: any[], locations: any[], employees: any[] }>({ departments: [], locations: [], employees: [] });
+  const [data, setData] = useState<{ departments: any[], locations: any[], employees: any[], legalEntities: any[], costCenters: any[] }>({ departments: [], locations: [], employees: [], legalEntities: [], costCenters: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<{ type: string, message: string } | null>(null);
   const [success, setSuccess] = useState('');
   
-  const [activeTab, setActiveTab] = useState<'departments' | 'locations'>('departments');
+  const [activeTab, setActiveTab] = useState<'departments' | 'locations' | 'legalEntities' | 'costCenters'>('departments');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
@@ -19,7 +21,11 @@ export default function Organization() {
   
   const [editingDept, setEditingDept] = useState<any>(null);
   const [editingLoc, setEditingLoc] = useState<any>(null);
-  const [deletingItem, setDeletingItem] = useState<{ type: 'dept' | 'loc', item: any } | null>(null);
+  const [editingLegalEntity, setEditingLegalEntity] = useState<any>(null);
+  const [editingCostCenter, setEditingCostCenter] = useState<any>(null);
+  const [leModalOpen, setLeModalOpen] = useState(false);
+  const [ccModalOpen, setCcModalOpen] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<{ type: 'dept' | 'loc' | 'le' | 'cc', item: any } | null>(null);
   const [saving, setSaving] = useState(false);
 
   // Dropdown Menu State
@@ -33,10 +39,12 @@ export default function Organization() {
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
       const headers = { 'Authorization': `Bearer ${token}` };
       
-      const [depsRes, locsRes, empRes] = await Promise.all([
+      const [depsRes, locsRes, empRes, leRes, ccRes] = await Promise.all([
         fetch(`${baseUrl}/org/departments`, { headers }),
         fetch(`${baseUrl}/org/locations`, { headers }),
-        fetch(`${baseUrl}/employees`, { headers })
+        fetch(`${baseUrl}/employees`, { headers }),
+        fetch(`${baseUrl}/org/legal-entities`, { headers }),
+        fetch(`${baseUrl}/org/cost-centers`, { headers })
       ]);
 
       if (depsRes.status === 401 || locsRes.status === 401 || empRes.status === 401) {
@@ -55,7 +63,7 @@ export default function Organization() {
         throw { type: 'SERVER', message: 'Internal server error occurred while fetching organization data.' };
       }
 
-      const [deps, locs, emps] = await Promise.all([depsRes.json(), locsRes.json(), empRes.json()]);
+      const [deps, locs, emps, les, ccs] = await Promise.all([depsRes.json(), locsRes.json(), empRes.json(), leRes.json(), ccRes.json()]);
 
       if (!depsRes.ok) throw { type: 'API', message: deps.error?.message || 'Failed to fetch departments' };
       if (!locsRes.ok) throw { type: 'API', message: locs.error?.message || 'Failed to fetch locations' };
@@ -63,7 +71,9 @@ export default function Organization() {
       setData({
         departments: deps.data || [],
         locations: locs.data || [],
-        employees: emps.data || []
+        employees: emps.data || [],
+        legalEntities: les.data || [],
+        costCenters: ccs.data || []
       });
       setError(null);
     } catch (err: any) {
@@ -264,13 +274,13 @@ export default function Organization() {
       {(!error || (error.type !== 'AUTH' && error.type !== 'PERMISSION' && error.type !== 'NOT_FOUND' && error.type !== 'SERVER' && error.type !== 'NETWORK')) && (
         <>
           {/* TABS */}
-          <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid var(--border-light)', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', gap: '24px', borderBottom: '1px solid var(--border-light)', marginBottom: '24px', overflowX: 'auto' }}>
         <button 
           style={{
             background: 'none', border: 'none', padding: '0 0 12px 0', fontSize: '14px', fontWeight: activeTab === 'departments' ? 600 : 500,
             color: activeTab === 'departments' ? 'var(--primary-dark)' : 'var(--text-secondary)',
             borderBottom: activeTab === 'departments' ? '2px solid var(--primary-dark)' : '2px solid transparent',
-            cursor: 'pointer', marginBottom: '-1px'
+            cursor: 'pointer', marginBottom: '-1px', whiteSpace: 'nowrap'
           }}
           onClick={() => { setActiveTab('departments'); setSearchQuery(''); }}
         >
@@ -281,11 +291,33 @@ export default function Organization() {
             background: 'none', border: 'none', padding: '0 0 12px 0', fontSize: '14px', fontWeight: activeTab === 'locations' ? 600 : 500,
             color: activeTab === 'locations' ? 'var(--primary-dark)' : 'var(--text-secondary)',
             borderBottom: activeTab === 'locations' ? '2px solid var(--primary-dark)' : '2px solid transparent',
-            cursor: 'pointer', marginBottom: '-1px'
+            cursor: 'pointer', marginBottom: '-1px', whiteSpace: 'nowrap'
           }}
           onClick={() => { setActiveTab('locations'); setSearchQuery(''); }}
         >
           Locations ({data.locations.length})
+        </button>
+        <button 
+          style={{
+            background: 'none', border: 'none', padding: '0 0 12px 0', fontSize: '14px', fontWeight: activeTab === 'legalEntities' ? 600 : 500,
+            color: activeTab === 'legalEntities' ? 'var(--primary-dark)' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'legalEntities' ? '2px solid var(--primary-dark)' : '2px solid transparent',
+            cursor: 'pointer', marginBottom: '-1px', whiteSpace: 'nowrap'
+          }}
+          onClick={() => { setActiveTab('legalEntities'); setSearchQuery(''); }}
+        >
+          Legal Entities ({data.legalEntities.length})
+        </button>
+        <button 
+          style={{
+            background: 'none', border: 'none', padding: '0 0 12px 0', fontSize: '14px', fontWeight: activeTab === 'costCenters' ? 600 : 500,
+            color: activeTab === 'costCenters' ? 'var(--primary-dark)' : 'var(--text-secondary)',
+            borderBottom: activeTab === 'costCenters' ? '2px solid var(--primary-dark)' : '2px solid transparent',
+            cursor: 'pointer', marginBottom: '-1px', whiteSpace: 'nowrap'
+          }}
+          onClick={() => { setActiveTab('costCenters'); setSearchQuery(''); }}
+        >
+          Cost Centers ({data.costCenters.length})
         </button>
       </div>
 

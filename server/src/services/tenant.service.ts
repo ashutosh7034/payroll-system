@@ -109,6 +109,27 @@ export class TenantProvisioningService {
       }
 
       // 4. Default Configuration
+      const legalEntity = await tx.legalEntity.create({
+        data: {
+          tenantId: tenant.id,
+          name: company.name
+        }
+      });
+
+      const calendar = await tx.workCalendar.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Standard 5-Day Week',
+          isMondayWorking: true,
+          isTuesdayWorking: true,
+          isWednesdayWorking: true,
+          isThursdayWorking: true,
+          isFridayWorking: true,
+          isSaturdayWorking: false,
+          isSundayWorking: false
+        }
+      });
+
       const basicComponent = await tx.salaryComponent.create({
         data: { tenantId: tenant.id, name: 'Basic Salary', code: 'BASIC', type: 'EARNING', isTaxable: true, formulas: { create: { tenantId: tenant.id, expression: '0.4 * CTC' } } }
       });

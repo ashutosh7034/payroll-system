@@ -80,9 +80,38 @@ export class PayrollEngine {
           where: { employeeId: emp.id, payrollPeriodMonth: run.runPeriodMonth, payrollPeriodYear: run.runPeriodYear, status: 'APPROVED' }
         });
 
+        
+        // --- PHASE 5: REIMBURSEMENTS ---
+        const reimbursements = await prisma.reimbursementClaim.findMany({
+          where: { employeeId: emp.id, status: 'APPROVED_FINANCE' }
+        });
+        const totalReimbursement = reimbursements.reduce((acc, curr) => acc + (curr.approvedAmount ? Number(curr.approvedAmount) : Number(curr.amount)), 0);
+
+        // --- PHASE 5: ARREARS ---
+        const arrearsData = await prisma.arrear.findMany({
+          where: { employeeId: emp.id, status: 'APPROVED', effectiveDate: { lte: endDate } }
+        });
+        const totalArrear = arrearsData.reduce((acc, curr) => acc + Number(curr.totalAmount), 0);
+        let arrears = 0;
+        arrears += totalArrear; // Add to existing arrears
+
+        // --- PHASE 5: LOANS & ADVANCES ---
+        const loans = await prisma.loan.findMany({
+          where: { employeeId: emp.id, status: 'ACTIVE' },
+          include: { installments: { where: { status: 'PENDING', dueDate: { lte: endDate } }, orderBy: { dueDate: 'asc' }, take: 1 } }
+        });
+        
+        let emiDeduction = 0;
+        const pendingInstallmentIds = [];
+        for (const loan of loans) {
+          if (loan.installments.length > 0) {
+            emiDeduction += Number(loan.installments[0].totalAmount);
+            pendingInstallmentIds.push(loan.installments[0].id);
+          }
+        }
+
         let variablePay = 0;
         let bonus = 0;
-        let arrears = 0;
         inputs.forEach(i => {
           if (i.inputType === 'VARIABLE_PAY') variablePay += Number(i.amount);
           if (i.inputType === 'BONUS') bonus += Number(i.amount);

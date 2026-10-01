@@ -203,6 +203,18 @@ export const getPlatformDashboardMetrics = async (req: Request, res: Response) =
     
     const totalEmployees = await prisma.employee.count();
 
+    const activePayrollRuns = await prisma.payrollRun.count({
+      where: {
+        status: { in: ['DRAFT', 'CALCULATING', 'PENDING_APPROVAL'] }
+      }
+    });
+
+    const failedPayrollRuns = await prisma.payrollRun.count({
+      where: {
+        status: { in: ['EXCEPTION', 'VALIDATION_FAILED'] }
+      }
+    });
+
     // Chart Data (Tenants created per month)
     const tenants = await prisma.tenant.findMany({
       where: { name: { not: 'PAYFLOW_PLATFORM' } },
@@ -276,7 +288,9 @@ export const getPlatformDashboardMetrics = async (req: Request, res: Response) =
           suspendedTenants,
           totalUsers,
           activeUsers,
-          totalEmployees
+          totalEmployees,
+          activePayrollRuns,
+          failedPayrollRuns
         },
         health: 'Operational',
         tenants,

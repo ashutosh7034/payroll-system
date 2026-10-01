@@ -88,12 +88,12 @@ export const createReimbursement = async (req: Request, res: Response) => {
     const tenantId = (req as any).user?.tenantId;
     if (!tenantId) return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
 
-    const { employeeId, category, amount, claimDate, remarks, payrollPeriodMonth, payrollPeriodYear } = req.body;
+    const { employeeId, categoryId, amount, claimDate, remarks, payrollPeriodMonth, payrollPeriodYear } = req.body;
 
     if (payrollPeriodMonth && payrollPeriodYear) await PayrollRunService.checkPeriodLock(tenantId, payrollPeriodMonth, payrollPeriodYear);
 
-    const claim = await prisma.reimbursement.create({
-      data: { tenantId, employeeId, category, amount, claimDate: new Date(claimDate), remarks, payrollPeriodMonth, payrollPeriodYear, status: 'PENDING' }
+    const claim = await prisma.reimbursementClaim.create({
+      data: { tenantId, employeeId, categoryId: categoryId || 'OTHER', amount, claimDate: new Date(claimDate), description: remarks, payrollRunId: null, status: 'PENDING' }
     });
     res.status(201).json({ success: true, data: claim });
   } catch (error) {
@@ -108,10 +108,10 @@ export const createLoan = async (req: Request, res: Response) => {
     const tenantId = (req as any).user?.tenantId;
     if (!tenantId) return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
 
-    const { employeeId, principalAmount, installmentAmount, startDate } = req.body;
+    const { employeeId, loanTypeId, principalAmount, installmentAmount, startDate, tenureMonths } = req.body;
 
     const loan = await prisma.loan.create({
-      data: { tenantId, employeeId, principalAmount, outstandingAmount: principalAmount, installmentAmount, startDate: new Date(startDate), status: 'ACTIVE' }
+      data: { tenantId, employeeId, loanTypeId: loanTypeId || 'DEFAULT', principalAmount, outstandingBalance: principalAmount, emiAmount: installmentAmount, tenureMonths: tenureMonths || 12, startDate: new Date(startDate), status: 'ACTIVE', totalAmount: principalAmount, totalInterest: 0, interestRate: 0 }
     });
     res.status(201).json({ success: true, data: loan });
   } catch (error) {

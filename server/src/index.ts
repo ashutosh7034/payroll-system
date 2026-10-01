@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 dotenv.config();
 
 import authRoutes from './routes/auth.routes';
+import meRoutes from './routes/me.routes';
 import platformRoutes from './routes/platform.routes';
 import employeeRoutes from './routes/employee.routes';
 import compensationRoutes from './routes/compensation.routes';
@@ -15,6 +16,9 @@ import paymentRoutes from './routes/payment.routes';
 import accountingRoutes from './routes/accounting.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import orgRoutes from './routes/org.routes';
+import loanRoutes from './routes/loan.routes';
+import reimbursementRoutes from './routes/reimbursement.routes';
+import arrearRoutes from './routes/arrear.routes';
 import calendarRoutes from './routes/calendar.routes';
 import leaveRoutes from './routes/leave.routes';
 import payrollInputRoutes from './routes/payroll-input.routes';
@@ -37,6 +41,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/me', meRoutes);
 app.use('/api/platform', platformRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/compensation', compensationRoutes);
@@ -46,6 +51,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/org', orgRoutes);
+app.use('/api/loans', loanRoutes);
+app.use('/api/reimbursements', reimbursementRoutes);
+app.use('/api/arrears', arrearRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll-inputs', payrollInputRoutes);

@@ -46,11 +46,18 @@ export const login = async (req: Request, res: Response) => {
 
     const roles = user.userRoles.map(ur => ur.role.name);
 
+    let employeeId = null;
+    const emp = await prisma.employee.findFirst({ where: { email: user.email, tenantId: user.tenantId } });
+    if (emp) {
+      employeeId = emp.id;
+    }
+
     const token = jwt.sign(
       {
         id: user.id,
         tenantId: user.tenantId,
-        roles
+        roles,
+        employeeId
       },
       process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '8h' }
@@ -63,7 +70,8 @@ export const login = async (req: Request, res: Response) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        roles
+        roles,
+        employeeId
       },
       tenant: {
         id: user.tenant.id,

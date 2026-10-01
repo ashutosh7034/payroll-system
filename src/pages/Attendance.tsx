@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { CalendarClock, Loader2, Search, Filter } from 'lucide-react';
+import { CalendarClock, Loader2, Search, Filter, Clock } from 'lucide-react';
+import { checkPermission } from '../utils/permissions';
 
 const Attendance = () => {
+  const { token, user } = useAuth();
   const [employees, setEmployees] = useState<any[]>([]);
+  const [myRecords, setMyRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuth();
 
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const canManage = checkPermission(user?.roles || [], 'attendance.manage');
+  
+
+  useEffect(() => { fetchEmployees(); }, [user]);
 
   const fetchEmployees = async () => {
     try {
@@ -44,6 +47,7 @@ const Attendance = () => {
       });
       if (res.ok) {
         alert('Attendance marked successfully!');
+        fetchEmployees();
       } else {
         alert('Failed to mark attendance');
       }
@@ -51,6 +55,8 @@ const Attendance = () => {
       console.error(err);
     }
   };
+
+  
 
   return (
     <div>
@@ -80,7 +86,7 @@ const Attendance = () => {
               <tr>
                 <th>Employee</th>
                 <th>Shift</th>
-                <th>Today's Status</th>
+                <th>Today\'s Status</th>
                 <th>Actions</th>
               </tr>
             </thead>

@@ -15,22 +15,22 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profile        TenantProfile?
-  users          User[]
-  departments    Department[]
-  locations      Location[]
-  legalEntities  LegalEntity[]
-  employees      Employee[]
-  designations   Designation[]
-  costCenters    CostCenter[]
-  auditLogs      AuditLog[]
-  statutoryRules StatutoryRule[]
-  workCalendars  WorkCalendar[]
-  reimbursements Reimbursement[]
-  loans          Loan[]
-  payrollInputs  PayrollInput[]
-  overtimes      Overtime[]
-  timesheets     Timesheet[]
+  profile             TenantProfile?
+  users               User[]
+  departments         Department[]
+  locations           Location[]
+  legalEntities       LegalEntity[]
+  employees           Employee[]
+  designations        Designation[]
+  costCenters         CostCenter[]
+  auditLogs           AuditLog[]
+  statutoryRules      StatutoryRule[]
+  workCalendars       WorkCalendar[]
+  reimbursementClaims ReimbursementClaim[]
+  loans               Loan[]
+  payrollInputs       PayrollInput[]
+  overtimes           Overtime[]
+  timesheets          Timesheet[]
 
   salaryStructures    SalaryStructure[]
   salaryComponents    SalaryComponent[]
@@ -112,11 +112,11 @@ model Department {
   id          String   @id @default(uuid())
   tenantId    String
   name        String
-  code        String?  // Added safely
+  code        String? // Added safely
   description String?
-  headId      String?  // Added safely
-  locationId  String?  // Added safely
-  parentId    String?  // Added safely
+  headId      String? // Added safely
+  locationId  String? // Added safely
+  parentId    String? // Added safely
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -134,16 +134,16 @@ model Location {
   id            String   @id @default(uuid())
   tenantId      String
   name          String
-  code          String?  // Added safely
+  code          String? // Added safely
   address       String?
-  addressLine2  String?  // Added safely
+  addressLine2  String? // Added safely
   city          String?
   state         String?
   country       String?
-  pincode       String?  // Added safely
-  contactPerson String?  // Added safely
-  contactEmail  String?  // Added safely
-  contactPhone  String?  // Added safely
+  pincode       String? // Added safely
+  contactPerson String? // Added safely
+  contactEmail  String? // Added safely
+  contactPhone  String? // Added safely
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -242,7 +242,7 @@ model Employee {
   workCalendars         EmployeeWorkCalendar[]
   leaveRequestsApprover LeaveRequest[]         @relation("LeaveApprover")
   payrollInputs         PayrollInput[]
-  reimbursements        Reimbursement[]
+  reimbursementClaims   ReimbursementClaim[]
   loans                 Loan[]
   overtimes             Overtime[]
   timesheets            Timesheet[]
@@ -250,6 +250,7 @@ model Employee {
   taxDeclarations       TaxDeclaration[]
   taxApprovals          TaxDeclaration[]       @relation("TaxApprover")
   managedDepartments    Department[]           @relation("DepartmentHead")
+  Arrear                Arrear[]
 
   @@unique([tenantId, employeeId])
 }
@@ -734,43 +735,6 @@ model PayrollInput {
   employee Employee @relation(fields: [employeeId], references: [id])
 }
 
-model Reimbursement {
-  id                 String   @id @default(uuid())
-  tenantId           String
-  employeeId         String
-  category           String
-  amount             Decimal
-  claimDate          DateTime
-  status             String   @default("PENDING")
-  payrollPeriodMonth Int?
-  payrollPeriodYear  Int?
-  remarks            String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
-model Loan {
-  id                String    @id @default(uuid())
-  tenantId          String
-  employeeId        String
-  principalAmount   Decimal
-  outstandingAmount Decimal
-  installmentAmount Decimal
-  startDate         DateTime
-  endDate           DateTime?
-  status            String    @default("ACTIVE") // ACTIVE, CLOSED, PAUSED
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-  employee Employee @relation(fields: [employeeId], references: [id])
-}
-
 // ==========================
 // PHASE E: PAYMENTS & ACCOUNTING
 // ==========================
@@ -948,38 +912,175 @@ model TaxDeclarationItem {
 
   taxDeclaration TaxDeclaration @relation(fields: [taxDeclarationId], references: [id], onDelete: Cascade)
 }
+
 model TenantProfile {
-  id        String   @id @default(uuid())
-  tenantId  String   @unique
-  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String @id @default(uuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  legalName       String?
-  displayName     String?
-  companyType     String?
-  industry        String?
-  website         String?
-  officialEmail   String?
-  officialPhone   String?
+  legalName     String?
+  displayName   String?
+  companyType   String?
+  industry      String?
+  website       String?
+  officialEmail String?
+  officialPhone String?
 
-  cin             String?
-  pan             String?
-  tan             String?
-  gstin           String?
+  cin   String?
+  pan   String?
+  tan   String?
+  gstin String?
 
   registeredAddress String?
-  city            String?
-  state           String?
-  country         String?
-  pincode         String?
+  city              String?
+  state             String?
+  country           String?
+  pincode           String?
 
   incorporationDate DateTime?
-  financialYear   String?
+  financialYear     String?
 
-  contactName     String?
-  contactDesignation String?
-  contactEmail    String?
-  contactPhone    String?
+  contactName           String?
+  contactDesignation    String?
+  contactEmail          String?
+  contactPhone          String?
   contactAlternatePhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoanType {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String
+  description     String?
+  interestRate    Decimal  @default(0.00) @db.Decimal(5, 2)
+  maxAmount       Decimal? @db.Decimal(12, 2)
+  maxTenureMonths Int?
+  isActive        Boolean  @default(true)
+
+  loans     Loan[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+}
+
+model Loan {
+  id              String   @id @default(uuid())
+  tenantId        String
+  employeeId      String
+  loanTypeId      String
+  principalAmount Decimal  @db.Decimal(12, 2)
+  interestRate    Decimal  @default(0.00) @db.Decimal(5, 2)
+  tenureMonths    Int
+  emiAmount       Decimal  @db.Decimal(12, 2)
+  startDate       DateTime
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, ACTIVE, CLOSED
+
+  approvedBy      String?
+  approvalDate    DateTime?
+  rejectionReason String?
+
+  totalInterest      Decimal @default(0.00) @db.Decimal(12, 2)
+  totalAmount        Decimal @db.Decimal(12, 2) // principal + interest
+  outstandingBalance Decimal @db.Decimal(12, 2)
+
+  loanType     LoanType          @relation(fields: [loanTypeId], references: [id])
+  employee     Employee          @relation(fields: [employeeId], references: [id])
+  installments LoanInstallment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model LoanInstallment {
+  id                String   @id @default(uuid())
+  loanId            String
+  installmentNumber Int
+  dueDate           DateTime
+  principalPart     Decimal  @db.Decimal(12, 2)
+  interestPart      Decimal  @db.Decimal(12, 2)
+  totalAmount       Decimal  @db.Decimal(12, 2)
+
+  status        String    @default("PENDING") // PENDING, RECOVERED_IN_PAYROLL, PAID_MANUALLY, DEFAULTED
+  recoveryRunId String? // If recovered via payroll run
+  paymentDate   DateTime?
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([loanId, installmentNumber])
+}
+
+model ReimbursementCategory {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  description  String?
+  limitPerYear Decimal? @db.Decimal(12, 2)
+  isTaxable    Boolean  @default(false)
+  isActive     Boolean  @default(true)
+
+  claims    ReimbursementClaim[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([tenantId, name])
+}
+
+model ReimbursementClaim {
+  id             String   @id @default(uuid())
+  tenantId       String
+  employeeId     String
+  categoryId     String
+  claimDate      DateTime
+  amount         Decimal  @db.Decimal(12, 2)
+  approvedAmount Decimal? @db.Decimal(12, 2)
+  description    String?
+  receiptUrl     String?
+
+  status       String  @default("PENDING") // PENDING, APPROVED_HR, APPROVED_FINANCE, REJECTED, PAID
+  payrollRunId String?
+
+  rejectionReason  String?
+  verifiedBy       String?
+  verificationDate DateTime?
+
+  category ReimbursementCategory @relation(fields: [categoryId], references: [id])
+  employee Employee              @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Arrear {
+  id            String   @id @default(uuid())
+  tenantId      String
+  employeeId    String
+  arrearType    String // SALARY_REVISION, BONUS, STATUTORY, OTHER
+  effectiveDate DateTime
+
+  basicArrear  Decimal @default(0.00) @db.Decimal(12, 2)
+  daArrear     Decimal @default(0.00) @db.Decimal(12, 2)
+  hraArrear    Decimal @default(0.00) @db.Decimal(12, 2)
+  otherArrears Decimal @default(0.00) @db.Decimal(12, 2)
+
+  totalAmount Decimal @db.Decimal(12, 2)
+
+  taxImpact Decimal @default(0.00) @db.Decimal(12, 2)
+  pfImpact  Decimal @default(0.00) @db.Decimal(12, 2)
+
+  status       String  @default("PENDING") // PENDING, APPROVED, PROCESSED
+  payrollRunId String?
+  notes        String?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

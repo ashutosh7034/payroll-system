@@ -14,7 +14,15 @@ export const requirePermission = (permissionName: string) => {
 
       // Check if user has the permission directly or via roles
       // For Phase A, since role claims might be in token, check if token has SUPER_ADMIN or specific permission
-      if (user.roles?.includes('PLATFORM_SUPER_ADMIN') || user.roles?.includes('TENANT_SUPER_ADMIN') || user.roles?.includes('COMPANY_ADMIN')) {
+      if (user.roles?.includes('PLATFORM_SUPER_ADMIN')) {
+        return next();
+      }
+
+      if (permissionName === 'PLATFORM_SUPER_ADMIN') {
+        return res.status(403).json({ error: 'Forbidden: Requires Platform Admin' });
+      }
+
+      if (user.roles?.includes('TENANT_SUPER_ADMIN') || user.roles?.includes('COMPANY_ADMIN')) {
         return next();
       }
 
@@ -82,5 +90,20 @@ export const requirePermission = (permissionName: string) => {
       console.error('RBAC Error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
+  };
+};
+
+export const requireSelfOrPermission = (permissionName: string) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    const user = req.user;
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Allow if requesting own data (requires employeeId in route params and JWT)
+    if (req.params.employeeId && req.params.employeeId === user.employeeId) {
+      return next();
+    }
+
+    // Otherwise, check regular permissions
+    return requirePermission(permissionName)(req, res, next);
   };
 };

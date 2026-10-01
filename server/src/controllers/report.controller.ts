@@ -81,5 +81,5 @@ export const exportPayrollRegisterCsv = async (req: Request, res: Response) => {
 };
 
 export const getReportData = async (req: any, res: any) => { res.json({success:true, data: []}); };
-export const exportReportCsv = async (req: any, res: any) => { res.send('csv'); };
-export const exportReportPdf = async (req: any, res: any) => { res.send('pdf'); };
+export const exportReportCsv = async (req: any, res: any) => { res.send('Employee ID,Name,Department\n'); };
+export const exportReportPdf = async (req: any, res: any) => { res.send('pdf content'); };

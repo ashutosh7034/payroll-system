@@ -143,3 +143,37 @@ export const reviewLeaveRequest = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Internal server error' } });
   }
 };
+
+export const getEmployeeLeaveRequests = async (req: any, res: any) => {
+  try {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const employeeId = req.params.employeeId;
+    const requests = await prisma.leaveRequest.findMany({
+      where: { employeeId, employee: { tenantId } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Internal server error' } });
+  }
+};
+
+export const getAllLeaveRequests = async (req: any, res: any) => {
+  try {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) return res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } });
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    const requests = await prisma.leaveRequest.findMany({
+      where: { employee: { tenantId } },
+      include: { employee: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    res.status(500).json({ success: false, error: { code: 'SERVER_ERROR', message: 'Internal server error' } });
+  }
+};

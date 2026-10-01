@@ -15,19 +15,34 @@ import PayrollInputCenter from './pages/PayrollInputCenter';
 import PayrollControlTower from './pages/PayrollControlTower';
 import TimeAttendanceDashboard from './pages/TimeAttendanceDashboard';
 import Attendance from './pages/Attendance';
-import Payslips from './pages/Payslips';
+import MyPayslips from './pages/MyPayslips';
+import MyDashboard from './pages/MyDashboard';
+import MyAttendance from './pages/MyAttendance';
+import MyLeave from './pages/MyLeave';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Organization from './pages/Organization';
+import Loans from './pages/Loans';
+import Reimbursements from './pages/Reimbursements';
+import Arrears from './pages/Arrears';
 import Leave from './pages/Leave';
 import PlatformDashboard from './pages/PlatformDashboard';
 import PlatformTenants from './pages/PlatformTenants';
 import TenantManagement from './pages/TenantManagement';
 import ConfigurationStudio from './pages/ConfigurationStudio';
 import Reports from './pages/Reports';
+import Accounting from './pages/Accounting';
 import ReportDetail from './pages/ReportDetail';
 import Simulation from './pages/Simulation';
 import PlatformTenantConfiguration from './pages/PlatformTenantConfiguration';
+import PlatformFeaturePlaceholder from './pages/PlatformFeaturePlaceholder';
+import PlatformUsers from './pages/PlatformUsers';
+import PlatformRoles from './pages/PlatformRoles';
+import PlatformModules from './pages/PlatformModules';
+import PlatformSystemHealth from './pages/PlatformSystemHealth';
+import PlatformAudit from './pages/PlatformAudit';
+import PlatformConfiguration from './pages/PlatformConfiguration';
+import PlatformIntegrations from './pages/PlatformIntegrations';
 
 function App() {
   return (
@@ -41,19 +56,30 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               
               {/* Platform Admin Only */}
+              <Route path="platform" element={<Navigate to="/platform/dashboard" replace />} />
               <Route element={<RoleGuard allowedRoles={['PLATFORM_SUPER_ADMIN']} />}>
                 <Route path="platform/dashboard" element={<PlatformDashboard />} />
                 <Route path="platform/tenants" element={<PlatformTenants />} />
                 <Route path="platform/tenants/:tenantId" element={<TenantManagement />} />
                 <Route path="platform/tenants/:tenantId/configuration/:module" element={<PlatformTenantConfiguration />} />
+                <Route path="platform/users" element={<PlatformUsers />} />
+                <Route path="platform/roles" element={<PlatformRoles />} />
+                <Route path="platform/modules" element={<PlatformModules />} />
+                <Route path="platform/configuration" element={<PlatformConfiguration />} />
+                <Route path="platform/integrations" element={<PlatformIntegrations />} />
+                <Route path="platform/audit" element={<PlatformAudit />} />
+                <Route path="platform/system-health" element={<PlatformSystemHealth />} />
               </Route>
 
               {/* Accessible by everyone including Employee */}
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="leave" element={<Leave />} />
-              <Route path="payslips" element={<Payslips />} />
-              <Route path="payslips/:id" element={<Payslips />} />
+              <Route path="my-dashboard" element={<MyDashboard />} />
+              <Route path="my-attendance" element={<MyAttendance />} />
+              <Route path="my-leave" element={<MyLeave />} />
+              <Route path="my-payslips" element={<MyPayslips />} />
+              <Route path="my-payslips/:id" element={<MyPayslips />} />
               
               {/* Not for regular employees */}
               <Route element={<RoleGuard forbidEmployeeOnly={true} />}>
@@ -98,6 +124,8 @@ function App() {
                   <Route path="reports" element={<Reports />} />
                   <Route path="reports/:id" element={<ReportDetail />} />
                 </Route>
+
+                <Route path="accounting" element={<Accounting />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

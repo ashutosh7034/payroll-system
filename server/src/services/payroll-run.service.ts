@@ -72,6 +72,13 @@ export class PayrollRunService {
       return u;
     });
 
+    try {
+      const { AccountingService } = require('./accounting.service');
+      await AccountingService.generateJournal(tenantId, id, userId);
+    } catch(e) {
+      console.error('Failed to generate accounting journal during lockRun:', e);
+    }
+
     return updated;
   }
 

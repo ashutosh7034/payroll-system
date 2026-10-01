@@ -19,7 +19,7 @@ async function main() {
   }
 
   // 3. Create Platform Super Admin User
-  const platformPassword = await bcrypt.hash('Payflow@Platform2026!', 10);
+  const platformPassword = await bcrypt.hash('Platform@Admin2026!', 10);
   let platformUser = await prisma.user.findFirst({ where: { email: 'platform.admin@payflow.local' } });
   if (!platformUser) {
     platformUser = await prisma.user.create({
